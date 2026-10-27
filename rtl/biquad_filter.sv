@@ -45,11 +45,41 @@ assign scaled_result = accumulator >>> COEFF_FRAC_BITS;
 
 // turn this signal into 16 bits..saturation
 logic signed [15:0] saturated_result; 
-always comb begin (
-
-)
+always_comb begin
+    if (scaled_result > 51'sd32767) begin 
+        saturated_result = 16'sd32767;
+    end 
+    else if (scaled_result < -51'sd32768) begin
+        saturated_result = -16'sd32768; // I need to look more at why clamping low causes this effect
+    end 
+    else begin
+        saturated_result = scaled_result[15:0];
+    end
+end
 
 // store this in y_out...sequential
-
 // set output_valid high...sequential
+always_ff @(posedge clk) begin 
+    if (rst) begin // synchronous reset
+        y_out <= 16'sd0;
+        output_valid <= 1'b0;
+        x1 <= 16'sd0;
+        x2 <= 16'sd0;
+        y1 <= 16'sd0;
+        y2 <= 16'sd0;
+    end
+    else if (sample_valid) begin
+        y_out <= saturated_result;
+        output_valid <= 1'b1;
+        x1 <= x_in;
+        x2 <= x1;
+        y1 <= saturated_result;
+        y2 <= y1;
+    end 
+    else begin
+        output_valid <= 1'b0;
+    end
+end
+
+endmodule
 
