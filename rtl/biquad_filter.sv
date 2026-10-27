@@ -24,8 +24,8 @@ parameter signed [31:0] a2 = 32'sd1048576; // Output feedback coefficient from t
 logic signed [47:0] product_b0;
 logic signed [47:0] product_b1;
 logic signed [47:0] product_b2;
-logic signed [47:0] product_b3;
-logic signed [47:0] product_b4;
+logic signed [47:0] product_a1;
+logic signed [47:0] product_a2;
 
 // Calculate the five products in parallel
 assign product_b0 = b0 * x_in;
@@ -38,8 +38,18 @@ assign product_a2 = a2 * y2;
 logic signed [50:0] accumulator;
 
 // Implement the difference equation
-assignment accumulator = product_b0 + product_b1 + product_b2 - product_a1 - product_a2;
-
+assign accumulator = product_b0 + product_b1 + product_b2 - product_a1 - product_a2;
+logic signed [50:0] scaled_result;
 // fixed-right arithmetic shift by 20 bits
 assign scaled_result = accumulator >>> COEFF_FRAC_BITS;
+
+// turn this signal into 16 bits..saturation
+logic signed [15:0] saturated_result; 
+always comb begin (
+
+)
+
+// store this in y_out...sequential
+
+// set output_valid high...sequential
 
