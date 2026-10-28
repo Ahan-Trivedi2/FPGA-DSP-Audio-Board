@@ -97,3 +97,14 @@ always_ff @(posedge clk) begin
 end
 endmodule
 
+// Notes from Joe
+// Block diagram to show how we can have multiple implementations compensator
+// parallel path implementation
+// compensator
+// bit padding for signal paths..did you do this...fixed point arithmetic, right padding
+// block diagram implementation of the circuit
+// we can obtain the same transfer function through two different block diagram
+// block diagram manipulation
+// 
+
+// 11/24 8pm
