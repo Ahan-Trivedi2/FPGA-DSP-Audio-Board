@@ -1,3 +1,5 @@
+// this needs to be pipelined in order to give us more timing slack and decrease hardware utilization
+
 module biquad_filter (
     input logic clk,
     input logic rst, // Active-high synchronous reset
@@ -10,6 +12,7 @@ module biquad_filter (
 //=======================================================================================================
 // 1. Parameters
 //=======================================================================================================
+
 localparam int COEFF_FRAC_BITS = 20; // number of fractional bits for the fixed point arithmetic
 
 //Biquad filter coefficients (signed 32 bit Q12.20 fixed-point)
@@ -23,6 +26,7 @@ parameter signed [31:0] a2 = 32'sd601948; // Output feedback coefficient from tw
 //=======================================================================================================
 // 2. Internal Signal Declarations
 //=======================================================================================================
+
 logic signed [15:0] x1; // Reg to store previous audio sample the difference equation uses
 logic signed [15:0] x2; // Reg to store audio sample from two samples ago for the difference equation
 logic signed [15:0] y1; // Reg for previous filter output
@@ -74,6 +78,7 @@ end
 //=======================================================================================================
 // 4. Sequential Logic
 //=======================================================================================================
+
 always_ff @(posedge clk) begin 
     if (rst) begin // synchronous reset
         y_out <= 16'sd0;
