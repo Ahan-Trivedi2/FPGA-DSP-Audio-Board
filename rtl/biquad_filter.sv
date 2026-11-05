@@ -130,5 +130,6 @@ endmodule
 // 
 
 // nonblocking assignment vs always_ff 
+// i want to spend some more time visualizing this hardware
 
 // 11/24 8pm
