@@ -1,9 +1,11 @@
+// We need to make this work with 32 bit logic
+
 module biquad_filter (
-    input logic clk,
+    input logic clk, // 12.288MHz --> why does this work
     input logic rst, // Active-high synchronous reset
     input logic sample_valid, // High when new sample is ready
-    input logic signed [15:0] x_in, // Signed 16-bit audio sample
-    output logic signed [15:0] y_out, // reg for our 16 bit filtered output
+    input logic signed [31:0] x_in, // Signed 16-bit audio sample
+    output logic signed [31:0] y_out, // reg for our 16 bit filtered output
     output logic output_valid, // reg set high to indicate that the transmitter can read y_out
     output logic input_ready // signal for the receiver to indicate pipelined system can an input
 ); 
@@ -126,5 +128,7 @@ endmodule
 // we can obtain the same transfer function through two different block diagram
 // block diagram manipulation
 // 
+
+// nonblocking assignment vs always_ff 
 
 // 11/24 8pm
