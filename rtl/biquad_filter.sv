@@ -1,12 +1,11 @@
-// this needs to be pipelined in order to give us more timing slack and decrease hardware utilization
-
 module biquad_filter (
     input logic clk,
     input logic rst, // Active-high synchronous reset
     input logic sample_valid, // High when new sample is ready
     input logic signed [15:0] x_in, // Signed 16-bit audio sample
     output logic signed [15:0] y_out, // reg for our 16 bit filtered output
-    output logic output_valid // reg set high to indicate that the transmitter can read y_out
+    output logic output_valid, // reg set high to indicate that the transmitter can read y_out
+    output logic input_ready // signal for the receiver to indicate pipelined system can an input
 ); 
 
 //=======================================================================================================
@@ -32,32 +31,34 @@ logic signed [15:0] x2; // Reg to store audio sample from two samples ago for th
 logic signed [15:0] y1; // Reg for previous filter output
 logic signed [15:0] y2; // Reg for filter output from two output cycles ago 
 
-logic signed [47:0] product_b0; // comb signal for the first multiplier output
-logic signed [47:0] product_b1; // comb signal for the second multiplier output
-logic signed [47:0] product_b2; // comb signal for the third multiplier output
-logic signed [47:0] product_a1; // comb signal for the fourth multiplier output
-logic signed [47:0] product_a2; // comb signal for the fifth multiplier output
+// Stage 1 output registers that store products for the summation stage
+logic signed [47:0] product_b0;
+logic signed [47:0] product_b1;
+logic signed [47:0] product_b2;
+logic signed [47:0] product_a1;
+logic signed [47:0] product_a2;
+
+// Multiplication complete, waiting for summation
+logic mult_completed; 
 
 // Five signed 48-bit terms can require up to 51 bits to represent their mathematical sum without overflow (chat told me this...)
 logic signed [50:0] accumulator; // comb signal for our difference equation output
 
 logic signed [50:0] scaled_result; // comb signal for right shifted output of difference equation
 
-logic signed [15:0] saturated_result; 
+logic signed [15:0] saturated_result;  
 
 //=======================================================================================================
 // 3. Combinational Logic
 //=======================================================================================================
 
-// Five parallel multipliers representing difference equation products
-assign product_b0 = b0 * x_in;
-assign product_b1 = b1 * x1;
-assign product_b2 = b2 * x2;
-assign product_a1 = a1 * y1;
-assign product_a2 = a2 * y2;
+// This is all combinational logic that occurs in our summation circuit (stage 2)
 
 // Implement the difference equation
 assign accumulator = product_b0 + product_b1 + product_b2 - product_a1 - product_a2;
+
+// combinational control signal that indicates if the biquad can accept a new sample 
+assign input_ready = !mult_completed && !rst;
 
 // Fixed-right arithmetic shift by 20 bits
 assign scaled_result = accumulator >>> COEFF_FRAC_BITS;
@@ -81,6 +82,7 @@ end
 
 always_ff @(posedge clk) begin 
     if (rst) begin // synchronous reset
+        mult_completed <= 1'b0;
         y_out <= 16'sd0;
         output_valid <= 1'b0;
         x1 <= 16'sd0;
@@ -88,14 +90,27 @@ always_ff @(posedge clk) begin
         y1 <= 16'sd0;
         y2 <= 16'sd0;
     end
-    else if (sample_valid) begin
+    else if (mult_completed) begin
+        // Stage 2: Capture the accumulated and saturated result
         y_out <= saturated_result;
         output_valid <= 1'b1;
-        x1 <= x_in;
-        x2 <= x1;
         y1 <= saturated_result;
         y2 <= y1;
+        mult_completed <= 1'b0; // reset for next sample
     end 
+    else if (sample_valid) begin
+        // Stage 1: Capture multiplication results in pipeline registers
+        product_b0 <= b0 * x_in;
+        product_b1 <= b1 * x1;
+        product_b2 <= b2 * x2;
+        product_a1 <= a1 * y1;
+        product_a2 <= a2 * y2;
+        mult_completed <= 1'b1; // after all multiplications get completed, we want to send stage 2 this control signal
+        output_valid <= 1'b0;
+        // ensure we update x1 and x2, so combinational changes to x_in don't impact our system
+        x1 <= x_in;
+        x2 <= x1;
+    end
     else begin
         output_valid <= 1'b0; // This ensures we set the output_valid reg back to 0
     end
