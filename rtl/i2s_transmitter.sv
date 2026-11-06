@@ -37,7 +37,7 @@ always_ff @(posedge clk or posedge rst) begin
             end
             // transmit zeros for our unused channel spot
             else if (bit_count >= 6'd33) begin
-                i2s_sd <= 1'b0;
+                i2s_sd <= 1'b0; // do we even need to send this audio packet...can our stm not just omit a channel
             end
             bit_count <= bit_count + 6'd1; // increment bit count 
         end

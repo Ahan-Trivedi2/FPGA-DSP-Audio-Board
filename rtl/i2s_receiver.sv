@@ -25,14 +25,17 @@ always_ff @(posedge clk or posedge rst) begin
     sample_valid <= 1'd0;
     end
     else begin
+        if (frame_start) begin
+            bit_count <= 1'b0;
+        end
         sample_valid <= 1'b0;
-        if (i2s_sample_enable) begin
+        else if (i2s_sample_enable) begin
             bit_count <= bit_count + 6'd1; // incrementing bit count to stay in sync with data
             if (bit_count >= 6'd1 && bit_count <= 6'd32) begin
                 shift_reg <= {shift_reg[30:0], i2s_sd};
             if (bit_count == 6'd32) begin
                 sample_out <= {shift_reg[30:0], i2s_sd};
-                sample_valid < 1'b1;
+                sample_valid <= 1'b1;
             end
             end
         end

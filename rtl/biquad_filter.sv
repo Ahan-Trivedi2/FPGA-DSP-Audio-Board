@@ -1,4 +1,5 @@
-// We need to make this work with 32 bit logic
+// This needs to only use one multiplier, currently it uses too many hardware resources
+// Talk to Daniel about this
 
 module biquad_filter (
     input logic clk, // 12.288MHz --> why does this work
