@@ -28,27 +28,27 @@ parameter signed [31:0] a2 = 32'sd601948; // Output feedback coefficient from tw
 // 2. Internal Signal Declarations
 //=======================================================================================================
 
-logic signed [15:0] x1; // Reg to store previous audio sample the difference equation uses
-logic signed [15:0] x2; // Reg to store audio sample from two samples ago for the difference equation
-logic signed [15:0] y1; // Reg for previous filter output
-logic signed [15:0] y2; // Reg for filter output from two output cycles ago 
+logic signed [31:0] x1; // Reg to store previous audio sample the difference equation uses
+logic signed [31:0] x2; // Reg to store audio sample from two samples ago for the difference equation
+logic signed [31:0] y1; // Reg for previous filter output
+logic signed [31:0] y2; // Reg for filter output from two output cycles ago 
 
 // Stage 1 output registers that store products for the summation stage
-logic signed [47:0] product_b0;
-logic signed [47:0] product_b1;
-logic signed [47:0] product_b2;
-logic signed [47:0] product_a1;
-logic signed [47:0] product_a2;
+logic signed [63:0] product_b0;
+logic signed [63:0] product_b1;
+logic signed [63:0] product_b2;
+logic signed [63:0] product_a1;
+logic signed [63:0] product_a2;
 
 // Multiplication complete, waiting for summation
 logic mult_completed; 
 
-// Five signed 48-bit terms can require up to 51 bits to represent their mathematical sum without overflow (chat told me this...)
-logic signed [50:0] accumulator; // comb signal for our difference equation output
+// The mathematical sum of five signed 64-bit values could require three additional bits (chat told me this)
+logic signed [66:0] accumulator; // comb signal for our difference equation output
 
-logic signed [50:0] scaled_result; // comb signal for right shifted output of difference equation
+logic signed [66:0] scaled_result; // comb signal for right shifted output of difference equation
 
-logic signed [15:0] saturated_result;  
+logic signed [31:0] saturated_result;  
 
 //=======================================================================================================
 // 3. Combinational Logic
@@ -66,15 +66,15 @@ assign input_ready = !mult_completed && !rst;
 assign scaled_result = accumulator >>> COEFF_FRAC_BITS;
 
 // Combinational logic to clamp the signal if its too big
-always_comb begin
-    if (scaled_result > 51'sd32767) begin 
-        saturated_result = 16'sd32767;
+always_comb begin // i need to look more into this section
+    if (scaled_result > 67'sd2147483647) begin 
+        saturated_result = 32'sd2147483647;
     end 
-    else if (scaled_result < -51'sd32768) begin
-        saturated_result = -16'sd32768; // I need to look more at why clamping low causes this effect
+    else if (scaled_result < -67'sd2147483648) begin
+        saturated_result = 32'sh80000000; // most negative 32 bit number
     end 
     else begin
-        saturated_result = scaled_result[15:0];
+        saturated_result = scaled_result[31:0];
     end
 end
 
@@ -85,12 +85,12 @@ end
 always_ff @(posedge clk) begin 
     if (rst) begin // synchronous reset
         mult_completed <= 1'b0;
-        y_out <= 16'sd0;
+        y_out <= 32'sd0;
         output_valid <= 1'b0;
-        x1 <= 16'sd0;
-        x2 <= 16'sd0;
-        y1 <= 16'sd0;
-        y2 <= 16'sd0;
+        x1 <= 32'sd0;
+        x2 <= 32'sd0;
+        y1 <= 32'sd0;
+        y2 <= 32'sd0;
     end
     else if (mult_completed) begin
         // Stage 2: Capture the accumulated and saturated result
@@ -131,5 +131,7 @@ endmodule
 
 // nonblocking assignment vs always_ff 
 // i want to spend some more time visualizing this hardware
+// why does the bit shift work...we increased precision, not numerical scaling when we shifted to this 32 bit implementation
+
 
 // 11/24 8pm
