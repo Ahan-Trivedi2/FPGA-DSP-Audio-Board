@@ -1,0 +1,3 @@
+[submodule "pluh-DSP"]
+	path = pluh-DSP
+	url = https://github.com/daniel-theunissen/pluh-DSP.git
