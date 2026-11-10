@@ -7,7 +7,7 @@ module i2s_clock_gen (
 
     output logic i2s_sample_enable, // tells the receiver when to sample ADC data
     output logic frame_start, // tells the receiver when to reallign bit counter to the start of an ADC data frame
-    output logic i2s_bit_enable, // Enables transmitter to update i2s_sd with the next serial bit
+    output logic i2s_bit_enable // Enables transmitter to update i2s_sd with the next serial bit
 );
 
 logic [1:0] clk_count;
