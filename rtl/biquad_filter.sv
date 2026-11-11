@@ -54,7 +54,7 @@ logic signed [31:0] saturated_result;
 //=======================================================================================================
 // 3. Combinational Logic
 //=======================================================================================================
-
+    
 // This is all combinational logic that occurs in our summation circuit (stage 2)
 
 // Implement the difference equation
