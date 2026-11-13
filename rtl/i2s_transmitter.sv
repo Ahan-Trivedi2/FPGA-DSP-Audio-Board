@@ -26,6 +26,8 @@ always_ff @(posedge clk or posedge rst) begin
             sample_buffer <= sample_in;
         end
         if (i2s_bit_enable) begin 
+            // Update i2s_sd on the system-clock edge that causes BCLK to fall,
+            // allowing data to settle before the next BCLK rising edge.
             // serialization logic here
             if (bit_count == 6'd0) begin 
                 shift_reg <= sample_buffer;
@@ -43,3 +45,5 @@ always_ff @(posedge clk or posedge rst) begin
         end
     end
 end
+
+endmodule
